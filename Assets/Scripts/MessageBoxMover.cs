@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-
 public class MessageBoxMover : MonoBehaviour
 {
+    public RectTransform canvasGameRect;
+
+    private RectTransform rectTransform;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        rectTransform = GetComponent<RectTransform>();
     }
 
     // Update is called once per frame
@@ -17,45 +20,20 @@ public class MessageBoxMover : MonoBehaviour
     {
         if (Input.GetMouseButton(0))
         {
-            // 2. クリック座標の取得
-            Vector2 clickPosition = Input.mousePosition;
-
-            // 3. スクリーン座標をUI座標に変換
-            RectTransform uiRoot = GetCanvasRectTransform();
-            Vector2 uiPosition;
-
-            if (uiRoot != null && RectTransformUtility.ScreenPointToLocalPointInRectangle(uiRoot, clickPosition, null, out uiPosition))
-            {
-                // ここでuiPositionを使用して処理を行います
-                Debug.Log("UI座標: " + uiPosition);
-
-                if (this.transform.position.y >= -1100 && this.transform.position.y <= -400)
-                {
-                    Vector3 newPosition = this.transform.position;
-                    newPosition.y = uiPosition.y + 1200.0f;
-                    this.transform.position = newPosition;
-                }
-            }
-            else
-            {
-                // 変換に失敗した場合の処理
-                Debug.Log("UI座標の変換に失敗しました。");
-            }
+            Vector2 currentMousePos = ScreenMousePos(Input.mousePosition);
+            rectTransform.anchoredPosition = currentMousePos;
+            Debug.Log(rectTransform.anchoredPosition.y + " | touch: " + currentMousePos.y);
+            if (rectTransform.anchoredPosition.y >= -400) rectTransform.anchoredPosition = new Vector3(0, -400, 0);
+            if (rectTransform.anchoredPosition.y <= -1080) rectTransform.anchoredPosition = new Vector3(0, -1080, 0);
         }
     }
 
-    RectTransform GetCanvasRectTransform()
-    {
-        Canvas canvas = FindObjectOfType<Canvas>();
-
-        if (canvas != null)
-        {
-            return canvas.GetComponent<RectTransform>();
-        }
-        else
-        {
-            Debug.LogError("Canvasが見つかりませんでした。Canvasを作成するか、既存のCanvasにアタッチしてください。");
-            return null;
-        }
+    Vector2 ScreenMousePos(Vector3 mousePos)
+    {    
+        Vector2 position = mousePos;
+        Vector2 screenToViewportPoint = Camera.main.ScreenToViewportPoint(position);
+        Vector2 worldObjectScreenPosition = new Vector2( rectTransform.anchoredPosition.x,
+            ((screenToViewportPoint.y * canvasGameRect.sizeDelta.y) - (canvasGameRect.sizeDelta.y * 0.5f)));
+        return worldObjectScreenPosition;
     }
 }
